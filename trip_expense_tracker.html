@@ -1,0 +1,856 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trip Expense Tracker — H, M, D</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background: #f5f4f0;
+        color: #1a1a1a;
+        min-height: 100vh;
+        padding: 2rem 1rem;
+      }
+      .container {
+        max-width: 860px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 22px;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+      .subtitle {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 1.5rem;
+      }
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+      }
+      .tab {
+        padding: 7px 18px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        cursor: pointer;
+        background: #fff;
+        color: #555;
+        transition: all 0.15s;
+      }
+      .tab:hover {
+        border-color: #aaa;
+      }
+      .tab.active {
+        background: #1a1a1a;
+        color: #fff;
+        border-color: #1a1a1a;
+        font-weight: 500;
+      }
+      .section {
+        display: none;
+      }
+      .section.active {
+        display: block;
+      }
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 1rem;
+      }
+      @media (max-width: 500px) {
+        .summary-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        border: 1px solid #e8e8e8;
+      }
+      .card .name {
+        font-size: 13px;
+        color: #888;
+        margin-bottom: 4px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .card .amount {
+        font-size: 22px;
+        font-weight: 600;
+      }
+      .card .sub {
+        font-size: 12px;
+        color: #999;
+        margin-top: 4px;
+      }
+      .card .net {
+        font-size: 12px;
+        margin-top: 6px;
+        font-weight: 500;
+      }
+      .total-card {
+        background: #1a1a1a;
+        color: #fff;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .total-card .label {
+        font-size: 14px;
+        color: #aaa;
+      }
+      .total-card .amount {
+        font-size: 24px;
+        font-weight: 600;
+      }
+      .settle-card {
+        background: #fff;
+        border: 1px solid #e8e8e8;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .settle-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 15px;
+        font-weight: 500;
+      }
+      .arrow {
+        color: #bbb;
+        font-size: 18px;
+      }
+      .amount-badge {
+        font-weight: 600;
+        background: #eef6ff;
+        color: #1a5fc4;
+        padding: 4px 12px;
+        border-radius: 8px;
+        font-size: 15px;
+      }
+      h2 {
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 1rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #e8e8e8;
+      }
+      th {
+        text-align: left;
+        padding: 10px 12px;
+        color: #888;
+        font-weight: 600;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        background: #fafafa;
+      }
+      td {
+        padding: 8px 12px;
+        border-bottom: 1px solid #f5f5f5;
+        vertical-align: middle;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      .date-row td {
+        padding: 6px 12px;
+        background: #f7f6f2;
+        font-weight: 600;
+        font-size: 12px;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .split-tag {
+        display: inline-block;
+        font-size: 11px;
+        padding: 2px 7px;
+        border-radius: 6px;
+        margin: 1px;
+        font-weight: 500;
+      }
+      .tag-h {
+        background: #eeedfe;
+        color: #4a41a8;
+      }
+      .tag-d {
+        background: #e1f5ee;
+        color: #0a6644;
+      }
+      .tag-m {
+        background: #faeeda;
+        color: #7a4a0a;
+      }
+      .who-h {
+        color: #4a41a8;
+        font-weight: 600;
+      }
+      .who-d {
+        color: #0a6644;
+        font-weight: 600;
+      }
+      .who-m {
+        color: #7a4a0a;
+        font-weight: 600;
+      }
+      .legend {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: #555;
+      }
+      .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Trip Expense Tracker</h1>
+      <p class="subtitle">
+        March 19–28, 2026 &nbsp;·&nbsp; Delhi → McLeodganj → Kasol
+      </p>
+
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-dot" style="background: #4a41a8"></div>
+          Harsh
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background: #0a6644"></div>
+          Deep
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background: #7a4a0a"></div>
+          Mayur
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="showTab('summary')">Summary</div>
+        <div class="tab" onclick="showTab('settle')">Settlement</div>
+        <div class="tab" onclick="showTab('log')">Full Log</div>
+      </div>
+
+      <div id="summary" class="section active">
+        <div class="summary-grid">
+          <div class="card">
+            <div class="name">Harsh</div>
+            <div class="amount" id="h-paid"></div>
+            <div class="sub" id="h-share"></div>
+            <div class="net" id="h-net"></div>
+          </div>
+          <div class="card">
+            <div class="name">Deep</div>
+            <div class="amount" id="d-paid"></div>
+            <div class="sub" id="d-share"></div>
+            <div class="net" id="d-net"></div>
+          </div>
+          <div class="card">
+            <div class="name">Mayur</div>
+            <div class="amount" id="m-paid"></div>
+            <div class="sub" id="m-share"></div>
+            <div class="net" id="m-net"></div>
+          </div>
+        </div>
+        <div class="total-card">
+          <div class="label">Total trip spend</div>
+          <div class="amount" id="total-amount"></div>
+        </div>
+      </div>
+
+      <div id="settle" class="section">
+        <h2>Who pays whom</h2>
+        <div id="settle-content"></div>
+      </div>
+
+      <div id="log" class="section">
+        <table>
+          <thead>
+            <tr>
+              <th>Paid by</th>
+              <th>Description</th>
+              <th>Amount</th>
+              <th>Split</th>
+            </tr>
+          </thead>
+          <tbody id="log-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      const expenses = [
+        {
+          date: "19 Mar",
+          who: "M",
+          desc: "Sprite snacks",
+          amt: 85,
+          split: { H: 28.33, M: 28.33, D: 28.33 },
+        },
+        {
+          date: "19 Mar",
+          who: "H",
+          desc: "Bhel",
+          amt: 200,
+          split: { H: 66.67, M: 66.67, D: 66.67 },
+        },
+        {
+          date: "20 Mar",
+          who: "D",
+          desc: "Station lounge",
+          amt: 300,
+          split: { H: 100, M: 100, D: 100 },
+        },
+        {
+          date: "20 Mar",
+          who: "H",
+          desc: "Station lounge tea",
+          amt: 60,
+          split: { H: 20, M: 20, D: 20 },
+        },
+        {
+          date: "20 Mar",
+          who: "D",
+          desc: "Jibhi stay",
+          amt: 4411,
+          split: { H: 1470.33, M: 1470.33, D: 1470.33 },
+        },
+        {
+          date: "20 Mar",
+          who: "D",
+          desc: "Tuk tuk - station to Pahadganj",
+          amt: 100,
+          split: { H: 33.33, M: 33.33, D: 33.33 },
+        },
+        {
+          date: "20 Mar",
+          who: "H",
+          desc: "Sitaram kulche",
+          amt: 405,
+          split: { H: 135, M: 135, D: 135 },
+        },
+        {
+          date: "20 Mar",
+          who: "H",
+          desc: "Rickshaw - Pahadganj to India Gate",
+          amt: 100,
+          split: { H: 33.33, M: 33.33, D: 33.33 },
+        },
+        {
+          date: "20 Mar",
+          who: "D",
+          desc: "Photo - India Gate",
+          amt: 60,
+          split: { H: 20, M: 20, D: 20 },
+        },
+        {
+          date: "20 Mar",
+          who: "H",
+          desc: "Rickshaw - India Gate to Jama Masjid",
+          amt: 140,
+          split: { H: 46.67, M: 46.67, D: 46.67 },
+        },
+        {
+          date: "20 Mar",
+          who: "M",
+          desc: "Delhi Metro",
+          amt: 96,
+          split: { H: 32, M: 32, D: 32 },
+        },
+        {
+          date: "20 Mar",
+          who: "D",
+          desc: "Sweet - Chandni Chowk",
+          amt: 150,
+          split: { H: 50, M: 50, D: 50 },
+        },
+        {
+          date: "20 Mar",
+          who: "M",
+          desc: "Rapido - Social Cafe to MCD",
+          amt: 34,
+          split: { H: 11.33, M: 11.33, D: 11.33 },
+        },
+        {
+          date: "20 Mar",
+          who: "D",
+          desc: "MCD Coffee",
+          amt: 278.26,
+          split: { H: 139.13, D: 139.13 },
+        },
+        {
+          date: "20 Mar",
+          who: "D",
+          desc: "MCD Meal",
+          amt: 500,
+          split: { H: 166.67, M: 166.67, D: 166.67 },
+        },
+        {
+          date: "20 Mar",
+          who: "H",
+          desc: "Water & snacks",
+          amt: 105,
+          split: { H: 35, M: 35, D: 35 },
+        },
+        {
+          date: "20 Mar",
+          who: "H",
+          desc: "Bus to Dharamshala",
+          amt: 690,
+          split: { H: 230, M: 230, D: 230 },
+        },
+        {
+          date: "20 Mar",
+          who: "H",
+          desc: "Taxi to McLeodganj",
+          amt: 500,
+          split: { H: 166.67, M: 166.67, D: 166.67 },
+        },
+        {
+          date: "20 Mar",
+          who: "D",
+          desc: "McLeodganj - Dosa",
+          amt: 629,
+          split: { D: 229, M: 200, H: 200 },
+        },
+        {
+          date: "20 Mar",
+          who: "D",
+          desc: "Shocks",
+          amt: 200,
+          split: { D: 100, H: 100 },
+        },
+        {
+          date: "20 Mar",
+          who: "D",
+          desc: "Carrom",
+          amt: 550,
+          split: { M: 275, D: 275 },
+        },
+        {
+          date: "20 Mar",
+          who: "D",
+          desc: "Momos Siddu (Deep)",
+          amt: 200,
+          split: { H: 66.67, M: 66.67, D: 66.67 },
+        },
+        {
+          date: "20 Mar",
+          who: "H",
+          desc: "Momos Siddu (Harsh)",
+          amt: 100,
+          split: { H: 33.33, M: 33.33, D: 33.33 },
+        },
+        {
+          date: "22 Mar",
+          who: "H",
+          desc: "Fruits",
+          amt: 50,
+          split: { H: 16.67, M: 16.67, D: 16.67 },
+        },
+        {
+          date: "22 Mar",
+          who: "D",
+          desc: "Breakfast",
+          amt: 280,
+          split: { H: 80, M: 90, D: 110 },
+        },
+        {
+          date: "22 Mar",
+          who: "H",
+          desc: "KitKat",
+          amt: 70,
+          split: { H: 23.33, M: 23.33, D: 23.33 },
+        },
+        {
+          date: "22 Mar",
+          who: "H",
+          desc: "Snacks momo top",
+          amt: 270,
+          split: { H: 90, M: 90, D: 90 },
+        },
+        {
+          date: "22 Mar",
+          who: "D",
+          desc: "Forest dept permit",
+          amt: 825,
+          split: { H: 275, M: 275, D: 275 },
+        },
+        {
+          date: "22 Mar",
+          who: "H",
+          desc: "Top Maggie",
+          amt: 360,
+          split: { H: 120, M: 120, D: 120 },
+        },
+        {
+          date: "22 Mar",
+          who: "D",
+          desc: "Deep maggie + chai",
+          amt: 50,
+          split: { H: 16.67, M: 16.67, D: 16.67 },
+        },
+        {
+          date: "22 Mar",
+          who: "M",
+          desc: "Trekking",
+          amt: 3000,
+          split: { H: 1000, M: 1000, D: 1000 },
+        },
+        {
+          date: "23 Mar",
+          who: "H",
+          desc: "Coffee",
+          amt: 300,
+          split: { H: 100, M: 100, D: 100 },
+        },
+        {
+          date: "23 Mar",
+          who: "M",
+          desc: "Dosa",
+          amt: 398,
+          split: { M: 199, H: 199 },
+        },
+        {
+          date: "23 Mar",
+          who: "D",
+          desc: "Dessert - Jimmy",
+          amt: 120,
+          split: { H: 60, D: 60 },
+        },
+        {
+          date: "23 Mar",
+          who: "H",
+          desc: "Momos",
+          amt: 100,
+          split: { M: 50, H: 50 },
+        },
+        {
+          date: "24 Mar",
+          who: "H",
+          desc: "Taxi",
+          amt: 5000,
+          split: { M: 1666.67, H: 1666.67, D: 1666.67 },
+        },
+        {
+          date: "24 Mar",
+          who: "H",
+          desc: "Fling Bus",
+          amt: 4500,
+          split: { H: 1500, M: 1500, D: 1500 },
+        },
+        {
+          date: "24 Mar",
+          who: "D",
+          desc: "Lunch",
+          amt: 454,
+          split: { H: 227, D: 227 },
+        },
+        {
+          date: "24 Mar",
+          who: "H",
+          desc: "Dinner",
+          amt: 690,
+          split: { H: 230, M: 230, D: 230 },
+        },
+        {
+          date: "25 Mar",
+          who: "H",
+          desc: "Breakfast - Aalo Paratha",
+          amt: 450,
+          split: { H: 150, M: 150, D: 150 },
+        },
+        {
+          date: "25 Mar",
+          who: "M",
+          desc: "Dinner",
+          amt: 210,
+          split: { H: 60, M: 75, D: 75 },
+        },
+        {
+          date: "25 Mar",
+          who: "D",
+          desc: "Scooty rent + petrol",
+          amt: 720,
+          split: { M: 240, D: 240, H: 240 },
+        },
+        {
+          date: "25 Mar",
+          who: "H",
+          desc: "Scooty (Harsh's)",
+          amt: 800,
+          split: { M: 400, H: 400 },
+        },
+        {
+          date: "25 Mar",
+          who: "H",
+          desc: "Xpulse",
+          amt: 1100,
+          split: { D: 1100 },
+        },
+        {
+          date: "25 Mar",
+          who: "D",
+          desc: "Packets",
+          amt: 120,
+          split: { H: 40, M: 40, D: 40 },
+        },
+        {
+          date: "25 Mar",
+          who: "H",
+          desc: "Packets",
+          amt: 60,
+          split: { H: 20, M: 20, D: 20 },
+        },
+        {
+          date: "26 Mar",
+          who: "H",
+          desc: "Aalo Paratha",
+          amt: 405,
+          split: { H: 135, M: 135, D: 135 },
+        },
+        {
+          date: "26 Mar",
+          who: "H",
+          desc: "Maggie - Thailand café",
+          amt: 220,
+          split: { H: 60, M: 60, D: 100 },
+        },
+        {
+          date: "26 Mar",
+          who: "H",
+          desc: "Dal fry jeera rice",
+          amt: 270,
+          split: { M: 90, D: 90, H: 90 },
+        },
+        {
+          date: "26 Mar",
+          who: "D",
+          desc: "Polka",
+          amt: 473,
+          split: { M: 157.67, D: 157.67, H: 157.67 },
+        },
+        {
+          date: "27 Mar",
+          who: "D",
+          desc: "Cab - Sarojini",
+          amt: 254,
+          split: { M: 84.67, D: 84.67, H: 84.67 },
+        },
+        {
+          date: "27 Mar",
+          who: "H",
+          desc: "Amritsari Chole Kulche",
+          amt: 320,
+          split: { M: 70, H: 70, D: 180 },
+        },
+        {
+          date: "27 Mar",
+          who: "H",
+          desc: "Burger King",
+          amt: 165,
+          split: { H: 82.5, M: 41.25, D: 41.25 },
+        },
+        {
+          date: "27 Mar",
+          who: "H",
+          desc: "Ice cream",
+          amt: 130,
+          split: { M: 20, H: 50, D: 60 },
+        },
+        {
+          date: "27 Mar",
+          who: "H",
+          desc: "Dinner - train",
+          amt: 470,
+          split: { H: 156.67, M: 156.67, D: 156.67 },
+        },
+        {
+          date: "28 Mar",
+          who: "D",
+          desc: "Auto",
+          amt: 205,
+          split: { M: 102.5, D: 102.5 },
+        },
+        {
+          date: "31 Mar",
+          who: "D",
+          desc: "Purse",
+          amt: 2250,
+          split: { H: 900, D: 1350 },
+        },
+        {
+          date: "31 Mar",
+          who: "H",
+          desc: "McLeodganj stay",
+          amt: 2000,
+          split: { H: 666.67, M: 666.67, D: 666.67 },
+        },
+        {
+          date: "31 Mar",
+          who: "H",
+          desc: "Train",
+          amt: 3900,
+          split: { D: 3900 },
+        },
+      ];
+
+      function calcTotals() {
+        let paid = { H: 0, D: 0, M: 0 };
+        let share = { H: 0, D: 0, M: 0 };
+        expenses.forEach((e) => {
+          paid[e.who] += e.amt;
+          Object.entries(e.split).forEach(
+            ([p, v]) => (share[p] = (share[p] || 0) + v),
+          );
+        });
+        return { paid, share };
+      }
+
+      function renderSummary() {
+        const { paid, share } = calcTotals();
+        const total = paid.H + paid.D + paid.M;
+        document.getElementById("total-amount").textContent =
+          "₹" + total.toFixed(2);
+        const labels = { H: "h", D: "d", M: "m" };
+        ["H", "D", "M"].forEach((p) => {
+          const k = labels[p];
+          document.getElementById(k + "-paid").textContent =
+            "₹" + paid[p].toFixed(2);
+          document.getElementById(k + "-share").textContent =
+            "Share: ₹" + share[p].toFixed(2);
+          const net = paid[p] - share[p];
+          const el = document.getElementById(k + "-net");
+          el.textContent =
+            net >= 0
+              ? "↑ Overpaid ₹" + net.toFixed(2)
+              : "↓ Owes ₹" + Math.abs(net).toFixed(2);
+          el.style.color = net >= 0 ? "#1a7a44" : "#c0392b";
+        });
+      }
+
+      function renderSettle() {
+        const { paid, share } = calcTotals();
+        let balances = {
+          H: paid.H - share.H,
+          D: paid.D - share.D,
+          M: paid.M - share.M,
+        };
+        let creditors = [],
+          debtors = [];
+        Object.entries(balances).forEach(([p, b]) => {
+          if (b > 0.01) creditors.push({ p, b });
+          else if (b < -0.01) debtors.push({ p, b: -b });
+        });
+        creditors.sort((a, b) => b.b - a.b);
+        debtors.sort((a, b) => b.b - a.b);
+        const names = { H: "Harsh", D: "Deep", M: "Mayur" };
+        let html = "";
+        let c = creditors.map((x) => ({ ...x })),
+          d = debtors.map((x) => ({ ...x }));
+        let ci = 0,
+          di = 0;
+        while (ci < c.length && di < d.length) {
+          let amt = Math.min(c[ci].b, d[di].b);
+          html += `<div class="settle-card">
+      <div class="settle-row">
+        <span>${names[d[di].p]}</span>
+        <span class="arrow">→</span>
+        <span>${names[c[ci].p]}</span>
+      </div>
+      <span class="amount-badge">₹${amt.toFixed(2)}</span>
+    </div>`;
+          c[ci].b -= amt;
+          d[di].b -= amt;
+          if (c[ci].b < 0.01) ci++;
+          if (d[di].b < 0.01) di++;
+        }
+        document.getElementById("settle-content").innerHTML = html;
+      }
+
+      function renderLog() {
+        const names = { H: "Harsh", D: "Deep", M: "Mayur" };
+        let html = "";
+        let lastDate = "";
+        expenses.forEach((e) => {
+          if (e.date !== lastDate) {
+            html += `<tr class="date-row"><td colspan="4">${e.date}</td></tr>`;
+            lastDate = e.date;
+          }
+          const splitStr = Object.entries(e.split)
+            .map(
+              ([p, v]) =>
+                `<span class="split-tag tag-${p.toLowerCase()}">${names[p]}: ₹${v.toFixed(0)}</span>`,
+            )
+            .join("");
+          html += `<tr>
+      <td class="who-${e.who.toLowerCase()}">${names[e.who]}</td>
+      <td>${e.desc}</td>
+      <td>₹${e.amt.toFixed(2)}</td>
+      <td>${splitStr}</td>
+    </tr>`;
+        });
+        document.getElementById("log-body").innerHTML = html;
+      }
+
+      function showTab(id) {
+        document
+          .querySelectorAll(".tab")
+          .forEach((t, i) =>
+            t.classList.toggle(
+              "active",
+              ["summary", "settle", "log"][i] === id,
+            ),
+          );
+        document
+          .querySelectorAll(".section")
+          .forEach((s) => s.classList.toggle("active", s.id === id));
+      }
+
+      renderSummary();
+      renderSettle();
+      renderLog();
+    </script>
+  </body>
+</html>
